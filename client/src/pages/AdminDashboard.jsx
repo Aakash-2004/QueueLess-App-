@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import AdminAnalytics from '../components/AdminAnalytics';
 
 const DEPT_ICONS = {
   'Electricity Service': '⚡',
@@ -10,7 +12,7 @@ const DEPT_ICONS = {
 };
 
 function AdminDashboard() {
-  const [stats, setStats] = useState({ totalUsers: 0, totalTokens: 0, totalComplaints: 0, activeTokens: 0, resolvedComplaints: 0 });
+  const [stats, setStats] = useState({ totalUsers: 0, totalTokens: 0, totalComplaints: 0, activeTokens: 0, resolvedComplaints: 0, serviceUsage: [], complaintStats: [] });
   const [activeTab, setActiveTab] = useState('overview');
   const [services, setServices] = useState([]);
   const [selectedServiceId, setSelectedServiceId] = useState('');
@@ -44,8 +46,17 @@ function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      const { data } = await api.get('/admin/stats');
-      setStats(data);
+      const statsRes = await api.get('/admin/stats');
+      
+      setStats({
+        totalUsers: statsRes.data.totalUsers || 0, // Keep existing stats fields
+        totalTokens: statsRes.data.totalTokens || 0,
+        totalComplaints: statsRes.data.totalComplaints || 0,
+        activeTokens: statsRes.data.activeTokens || 0,
+        resolvedComplaints: statsRes.data.resolvedComplaints || 0,
+        serviceUsage: statsRes.data.serviceUsage || [],
+        complaintStats: statsRes.data.complaintStats || []
+      });
     } catch (err) { console.error(err); }
   };
 
@@ -126,21 +137,26 @@ function AdminDashboard() {
 
       {/* OVERVIEW TAB */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in delay-200">
-          <div className="glass-card p-6 border-l-4 border-l-blue-500">
-            <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Total Users</p>
-            <h3 className="text-4xl font-bold text-gray-900">{stats.totalUsers}</h3>
+        <div className="animate-fade-in delay-200">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div className="glass-card p-6 border-l-4 border-l-blue-500 flex flex-col justify-center">
+              <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Total Users</p>
+              <h3 className="text-4xl font-bold text-gray-900">{stats.totalUsers}</h3>
+            </div>
+            <div className="glass-card p-6 border-l-4 border-l-indigo-500 flex flex-col justify-center">
+              <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Total Tokens</p>
+              <h3 className="text-4xl font-bold text-gray-900">{stats.totalTokens}</h3>
+              <p className="text-xs text-indigo-600 mt-2 font-medium">{stats.activeTokens} Currently Queued</p>
+            </div>
+            <div className="glass-card p-6 border-l-4 border-l-red-500 flex flex-col justify-center">
+              <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Total Complaints</p>
+              <h3 className="text-4xl font-bold text-gray-900">{stats.totalComplaints}</h3>
+              <p className="text-xs text-green-600 mt-2 font-medium">{stats.resolvedComplaints} Resolved</p>
+            </div>
           </div>
-          <div className="glass-card p-6 border-l-4 border-l-indigo-500">
-            <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Total Tokens</p>
-            <h3 className="text-4xl font-bold text-gray-900">{stats.totalTokens}</h3>
-            <p className="text-xs text-indigo-600 mt-2 font-medium">{stats.activeTokens} Currently Queued</p>
-          </div>
-          <div className="glass-card p-6 border-l-4 border-l-red-500">
-            <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Department Complaints</p>
-            <h3 className="text-4xl font-bold text-gray-900">{complaints.length}</h3>
-            <p className="text-xs text-green-600 mt-2 font-medium">{complaints.filter(c => c.status === 'RESOLVED').length} Resolved</p>
-          </div>
+          
+          {/* Global Analytics Dashboard Component */}
+          <AdminAnalytics stats={stats} />
         </div>
       )}
 

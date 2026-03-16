@@ -8,59 +8,60 @@ const generateToken = (id, role) => {
   });
 };
 
-exports.registerUser = async (req, res) => {
+// Register new user
+exports.register = async (req, res) => {
   try {
     const { fullName, phoneNumber, address, ebConnectionNumber, gasConnectionNumber, propertyPhoneNumber, password } = req.body;
     
+    // Validate inputs
+    if (!fullName || !phoneNumber || !password) {
+      return res.status(400).json({ message: 'Please provide all required fields' });
+    }
+
+    // Check if user exists
     const userExists = await User.findOne({ phoneNumber });
-    if (userExists) {
-      return res.status(400).json({ message: 'User already exists with this phone number' });
-    }
+    if (userExists) return res.status(400).json({ message: 'User already exists' });
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const user = await User.create({
-      fullName,
-      phoneNumber,
-      address,
-      ebConnectionNumber,
-      gasConnectionNumber,
-      propertyPhoneNumber,
-      password: hashedPassword,
-      role: 'user'
+    // Create user (password is hashed automatically in the model)
+    const user = await User.create({ 
+      fullName, 
+      phoneNumber, 
+      address, 
+      ebConnectionNumber, 
+      gasConnectionNumber, 
+      propertyPhoneNumber, 
+      password 
     });
-
-    if (user) {
-      res.status(201).json({
-        _id: user._id,
-        fullName: user.fullName,
-        role: user.role,
-        token: generateToken(user._id, user.role),
-      });
-    } else {
-      res.status(400).json({ message: 'Invalid user data' });
-    }
+    
+    res.status(201).json({
+      _id: user._id,
+      name: user.fullName,
+      token: generateToken(user._id, user.role)
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-exports.loginUser = async (req, res) => {
+exports.login = async (req, res) => {
   try {
     const { phoneNumber, password } = req.body;
     
+    if (!phoneNumber || !password) {
+      return res.status(400).json({ message: 'Please provide phone and password' });
+    }
+
     const user = await User.findOne({ phoneNumber });
 
-    if (user && (await bcrypt.compare(password, user.password))) {
+    if (user && (await user.matchPassword(password))) {
       res.json({
         _id: user._id,
-        fullName: user.fullName,
+        name: user.fullName,
         role: user.role,
-        token: generateToken(user._id, user.role),
+        token: generateToken(user._id, user.role)
       });
     } else {
-      res.status(401).json({ message: 'Invalid phone number or password' });
+      res.status(401).json({ message: 'Invalid credentials' });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });

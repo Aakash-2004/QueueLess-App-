@@ -25,9 +25,9 @@ function RegisterPage() {
     try {
       const { data } = await api.post('/auth/register', formData);
       localStorage.setItem('token', data.token);
-      localStorage.setItem('role', data.role);
+      localStorage.setItem('role', data.role || 'user');
       localStorage.setItem('userId', data._id);
-      localStorage.setItem('userName', data.fullName);
+      localStorage.setItem('userName', data.name);
       
       navigate('/dashboard');
     } catch (err) {

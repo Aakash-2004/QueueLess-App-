@@ -1,4 +1,5 @@
 const Token = require('../models/Token');
+const predictionService = require('../services/predictionService');
 const Service = require('../models/Service');
 
 exports.generateToken = async (req, res) => {
@@ -52,13 +53,19 @@ exports.getTokensByService = async (req, res) => {
 
 exports.updateTokenStatus = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
-    
-    const token = await Token.findByIdAndUpdate(id, { status }, { new: true });
+    const token = await Token.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
     if (!token) return res.status(404).json({ message: 'Token not found' });
-    
     res.json(token);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Expose AI queue prediction for a service
+exports.getQueuePrediction = async (req, res) => {
+  try {
+    const predictionLog = await predictionService.predictWaitTime(req.params.serviceId);
+    res.json(predictionLog);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -1,23 +1,18 @@
 const User = require('../models/User');
 const Token = require('../models/Token');
 const Complaint = require('../models/Complaint');
+const analyticsService = require('../services/analyticsService');
 
-exports.getDashboardStats = async (req, res) => {
+exports.getAdminStats = async (req, res) => {
   try {
-    const totalUsers = await User.countDocuments({ role: 'user' });
-    const totalTokens = await Token.countDocuments();
-    const totalComplaints = await Complaint.countDocuments();
-    
-    // Calculate current serving tokens and queue length
-    const activeTokens = await Token.countDocuments({ status: { $in: ['WAITING', 'SERVING'] } });
-    const resolvedComplaints = await Complaint.countDocuments({ status: 'RESOLVED' });
+    const overview = await analyticsService.getOverviewStats();
+    const serviceUsage = await analyticsService.getServiceUsageStats();
+    const complaintStats = await analyticsService.getComplaintStats();
 
     res.json({
-      totalUsers,
-      totalTokens,
-      totalComplaints,
-      activeTokens,
-      resolvedComplaints
+      ...overview,
+      serviceUsage,
+      complaintStats
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

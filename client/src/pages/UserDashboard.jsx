@@ -9,6 +9,8 @@ function UserDashboard() {
   // Complaint state
   const [complaintForm, setComplaintForm] = useState({ serviceType: '', complaintText: '' });
   const [complaintMsg, setComplaintMsg] = useState('');
+  const [complaintSuccess, setComplaintSuccess] = useState(''); // Added based on instruction
+  const [prediction, setPrediction] = useState(null); // Added based on instruction
 
   const userId = localStorage.getItem('userId');
   const userName = localStorage.getItem('userName');
@@ -36,7 +38,12 @@ function UserDashboard() {
     try {
       await api.post('/token/generate', { userId, serviceId });
       fetchMyTokens();
-      setActiveTab('tokens');
+      
+      // Fetch AI prediction for the service just booked
+      const predRes = await api.get(`/token/predict/${serviceId}`);
+      setPrediction(predRes.data);
+      
+      setActiveTab('tokens'); // Changed from 'status' to 'tokens' to match existing tab rendering
     } catch (err) { alert(err.response?.data?.message || 'Error generating token'); }
   };
 
@@ -84,9 +91,25 @@ function UserDashboard() {
       {activeTab === 'tokens' && (
         <div className="animate-fade-in delay-200">
           {myTokens.length === 0 ? (
-            <div className="text-center py-20 text-gray-500">You don't have any tokens yet.</div>
+            <div className="text-center py-12">
+              <p className="text-gray-400 font-medium">You don't have any active tokens yet.</p>
+              <button onClick={() => setActiveTab('services')} className="mt-4 text-blue-500 hover:text-blue-600 font-semibold transition-colors">
+                Browse Services →
+              </button>
+            </div>
           ) : (
-            <div className="grid gap-4">
+            <div className="space-y-4">
+              {/* AI Prediction Notice (shows if a token was just generated) */}
+              {prediction && activeTab === 'tokens' && (
+                <div className="bg-blue-50/50 backdrop-blur-md border border-blue-100 p-5 rounded-2xl mb-6 flex items-start gap-4">
+                  <span className="text-3xl">🤖</span>
+                  <div>
+                    <h4 className="font-bold text-blue-900 tracking-tight">AI Estimated Wait Time</h4>
+                    <p className="text-sm text-blue-700 font-medium mt-1">Based on current queue length ({prediction.queueLength}) and historical service rates, your estimated wait time is <strong className="text-blue-900">{prediction.estimatedWaitText}</strong>.</p>
+                  </div>
+                </div>
+              )}
+
               {myTokens.map(token => {
                 const waitTime = token.queuePosition * 10; // 10 mins approx per person
                 return (
