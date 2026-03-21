@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
         APP_NAME = 'queueless'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
     }
@@ -10,22 +9,20 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Checkout code from Bitbucket
                 checkout scm
             }
         }
 
-        stage('Install Dependencies & Test') {
+        stage('Install Dependencies') {
             steps {
                 echo 'Installing Backend Dependencies...'
                 dir('server') {
-                    sh 'npm install'
-                    // sh 'npm test' // Uncomment when tests are added
+                    bat 'npm install'
                 }
+
                 echo 'Installing Frontend Dependencies...'
                 dir('client') {
-                    sh 'npm install'
-                    // sh 'npm run build' // Test build
+                    bat 'npm install'
                 }
             }
         }
@@ -33,24 +30,15 @@ pipeline {
         stage('Build Docker Images') {
             steps {
                 echo 'Building using Docker Compose...'
-                sh 'docker-compose build'
+                bat 'docker-compose build'
             }
         }
 
         stage('Deploy Container') {
             steps {
-                echo 'Deploying application locally using Docker Compose...'
-                sh 'docker-compose down'
-                sh 'docker-compose up -d'
-            }
-            post {
-                success {
-                    echo 'Deployment Successful! App is running.'
-                }
-                failure {
-                    echo 'Deployment Failed. Rolling back changes.'
-                    sh 'docker-compose logs'
-                }
+                echo 'Deploying application...'
+                bat 'docker-compose down'
+                bat 'docker-compose up -d'
             }
         }
     }
