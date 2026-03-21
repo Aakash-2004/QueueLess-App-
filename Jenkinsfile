@@ -7,8 +7,10 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout') {
             steps {
+                echo 'Cloning repository...'
                 checkout scm
             }
         }
@@ -29,17 +31,37 @@ pipeline {
 
         stage('Build Docker Images') {
             steps {
-                echo 'Building using Docker Compose...'
-                bat 'docker-compose build'
+                echo 'Building Docker images using docker compose...'
+                bat 'docker compose build'
             }
         }
 
-        stage('Deploy Container') {
+        stage('Deploy Application') {
             steps {
-                echo 'Deploying application...'
-                bat 'docker-compose down'
-                bat 'docker-compose up -d'
+                echo 'Stopping old containers...'
+                bat 'docker compose down'
+
+                echo 'Starting new containers...'
+                bat 'docker compose up -d'
             }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                echo 'Checking running containers...'
+                bat 'docker ps'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ SUCCESS: Application deployed successfully!'
+        }
+        failure {
+            echo '❌ FAILURE: Something went wrong!'
+            echo 'Showing container logs...'
+            bat 'docker compose logs'
         }
     }
 }
