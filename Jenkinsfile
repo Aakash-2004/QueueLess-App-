@@ -4,6 +4,7 @@ pipeline {
     environment {
         APP_NAME = 'queueless'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
+        DOCKER_PATH = '"C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe"'
     }
 
     stages {
@@ -31,25 +32,25 @@ pipeline {
 
         stage('Build Docker Images') {
             steps {
-                echo 'Building Docker images using docker compose...'
-                bat 'docker compose build'
+                echo 'Building Docker images using Docker Compose...'
+                bat "%DOCKER_PATH% compose build"
             }
         }
 
         stage('Deploy Application') {
             steps {
                 echo 'Stopping old containers...'
-                bat 'docker compose down'
+                bat "%DOCKER_PATH% compose down"
 
                 echo 'Starting new containers...'
-                bat 'docker compose up -d'
+                bat "%DOCKER_PATH% compose up -d"
             }
         }
 
         stage('Verify Deployment') {
             steps {
                 echo 'Checking running containers...'
-                bat 'docker ps'
+                bat "%DOCKER_PATH% ps"
             }
         }
     }
@@ -61,7 +62,7 @@ pipeline {
         failure {
             echo '❌ FAILURE: Something went wrong!'
             echo 'Showing container logs...'
-            bat 'docker compose logs'
+            bat "%DOCKER_PATH% compose logs"
         }
     }
 }
