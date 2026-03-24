@@ -29,7 +29,7 @@ function LandingPage() {
       {/* Feature Section */}
       <section className="w-full bg-white py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 tracking-tight">The ultimate service experience.</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 tracking-tight">The ultimate service experience Demo.</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             <div className="glass-card bg-gray-50/50 p-10 flex flex-col items-center text-center transform transition-transform duration-500 hover:scale-[1.03]">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6">
